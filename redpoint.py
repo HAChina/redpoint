@@ -161,6 +161,7 @@ def setup(hass, config=None):
         "Redpoint:info":["%s/redpoint/info"%(token), False, RedpointInfoView],
         "Redpoint:version":["%s/redpoint/version"%(token), False, RedpointVersionView],
         "Redpoint:publish":["%s/redpoint/publish"%(token), False, RedpointPublishView],
+        "Redpoint:restart":["%s/redpoint/restart"%(token), False, RedpointRestartView],
         }
     for name, t in views.items():
         view = t[2]()
@@ -257,6 +258,18 @@ class RedpointPublishView(HomeAssistantView):
     def post(self, request):
         """Return themes."""
         result = yield from self.hass.async_add_job(self.rpa.Publish)
+        if result:
+            out = 'OK'
+        else:
+            out = 'KO'
+        return web.Response(text=out, content_type="text/html")
+
+class RedpointRestartView(HomeAssistantView):
+    """View to return defined themes."""
+    @asyncio.coroutine
+    def post(self, request):
+        """Return themes."""
+        result = yield from self.hass.services.async_call('homeassistant','restart')
         if result:
             out = 'OK'
         else:
