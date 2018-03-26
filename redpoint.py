@@ -127,6 +127,7 @@ import asyncio
 from aiohttp import web
 import json
 import uuid
+import importlib
 
 import voluptuous as vol
 from homeassistant.util.async import run_coroutine_threadsafe
@@ -162,6 +163,7 @@ def setup(hass, config=None):
         "Redpoint:version":["%s/redpoint/version"%(token), False, RedpointVersionView],
         "Redpoint:publish":["%s/redpoint/publish"%(token), False, RedpointPublishView],
         "Redpoint:restart":["%s/redpoint/restart"%(token), False, RedpointRestartView],
+        "Redpoint:sourcecode":["%s/redpoint/sourcecode"%(token), False, RedpointSourcecodeView],
         }
     for name, t in views.items():
         view = t[2]()
@@ -275,3 +277,30 @@ class RedpointRestartView(HomeAssistantView):
         else:
             out = 'KO'
         return web.Response(text=out, content_type="text/html")
+
+class RedpointSourcecodeView(HomeAssistantView):
+    """View to return defined themes."""
+    @asyncio.coroutine
+    def get(self, request):
+        """Return themes."""
+        comp_name = request.query['component']
+        potential_paths = ['custom_components.{}'.format(comp_name),
+                           'homeassistant.components.{}'.format(comp_name)]
+
+        ret={}
+        for path in potential_paths:
+            complib = importlib.util.find_spec(path)
+            if complib:
+                _LOGGER.info("file = %s", complib.origin)
+
+                f = open(complib.origin,'r', encoding='utf-8')
+                ret['fileContent'] = f.read()
+                f.close()
+
+                ret['isOK'] = True
+                ret['filePath'] = complib.origin
+                return web.Response(text=json.dumps(ret), content_type="text/plain")
+
+        ret['isOK'] = False
+        return web.Response(text=json.dumps(ret), content_type="text/plain")
+        
