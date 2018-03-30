@@ -13,7 +13,7 @@ import json
 class redpoint_agent(object):
 
     def __init__(self, ConfigPath=None, EditPath=None, Cmd_hass='hass'):
-        self._version = '0.0.3'
+        self._version = '0.0.4'
 
         if os.name == 'nt':
             self._startupinfo = subprocess.STARTUPINFO()
@@ -52,7 +52,7 @@ class redpoint_agent(object):
                 (adir.endswith('deps') and filename=='man')
                 or (('deps' in adir) and ('Python' in adir) and filename=='Scripts')
                 or (adir.endswith('site-packages') and ('colorlog' not in filename))
-                or filename == 'tts'
+                or (('custom_components' not in adir) and (filename == 'tts'))
                 or filename.endswith('.db')
                 #or filename == '__pycache__'
                 ]
@@ -213,7 +213,7 @@ class RedpointCheckView(HomeAssistantView):
         """Return themes."""
         #out = self.rpa.Check()
         out = yield from self.hass.async_add_job(self.rpa.Check)
-        return web.Response(text=out, content_type="text/html")
+        return web.Response(text=out, content_type="application/json")
 
 
 class RedpointConfigurationView(HomeAssistantView):
@@ -222,7 +222,7 @@ class RedpointConfigurationView(HomeAssistantView):
     def get(self, request):
         """Return themes."""
         out = yield from self.hass.async_add_job(self.rpa.ReadConfiguration)
-        return web.Response(text=out, content_type="text/html")
+        return web.Response(text=out, content_type="text/plain")
 
     @asyncio.coroutine
     def post(self, request):
@@ -234,7 +234,7 @@ class RedpointConfigurationView(HomeAssistantView):
             out = 'OK'
         else:
             out = 'KO'
-        return web.Response(text=out, content_type="text/html")
+        return web.Response(text=out, content_type="text/plain")
 
 
 class RedpointInfoView(HomeAssistantView):
@@ -243,7 +243,7 @@ class RedpointInfoView(HomeAssistantView):
     def get(self, request):
         """Return themes."""
         out = json.dumps(self.rpa.config)
-        return web.Response(text=out, content_type="text/html")
+        return web.Response(text=out, content_type="application/json")
 
 class RedpointVersionView(HomeAssistantView):
     """View to return defined themes."""
@@ -251,7 +251,7 @@ class RedpointVersionView(HomeAssistantView):
     def get(self, request):
         """Return themes."""
         out = self.rpa.version
-        return web.Response(text=out, content_type="text/html")
+        return web.Response(text=out, content_type="text/plain")
 
 
 class RedpointPublishView(HomeAssistantView):
@@ -264,7 +264,7 @@ class RedpointPublishView(HomeAssistantView):
             out = 'OK'
         else:
             out = 'KO'
-        return web.Response(text=out, content_type="text/html")
+        return web.Response(text=out, content_type="text/plain")
 
 class RedpointRestartView(HomeAssistantView):
     """View to return defined themes."""
@@ -276,7 +276,7 @@ class RedpointRestartView(HomeAssistantView):
             out = 'OK'
         else:
             out = 'KO'
-        return web.Response(text=out, content_type="text/html")
+        return web.Response(text=out, content_type="text/plain")
 
 class RedpointSourcecodeView(HomeAssistantView):
     """View to return defined themes."""
@@ -299,8 +299,8 @@ class RedpointSourcecodeView(HomeAssistantView):
 
                 ret['isOK'] = True
                 ret['filePath'] = complib.origin
-                return web.Response(text=json.dumps(ret), content_type="text/plain")
+                return web.Response(text=json.dumps(ret), content_type="application/json")
 
         ret['isOK'] = False
-        return web.Response(text=json.dumps(ret), content_type="text/plain")
+        return web.Response(text=json.dumps(ret), content_type="application/json")
         
