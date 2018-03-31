@@ -53,6 +53,7 @@ class redpoint_agent(object):
                 or (('deps' in adir) and ('Python' in adir) and filename=='Scripts')
                 or (adir.endswith('site-packages') and ('colorlog' not in filename))
                 or (('custom_components' not in adir) and (filename == 'tts'))
+                or filename.endswith('.swp')
                 or filename.endswith('.db')
                 #or filename == '__pycache__'
                 ]
