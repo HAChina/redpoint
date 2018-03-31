@@ -13,7 +13,7 @@ import json
 class redpoint_agent(object):
 
     def __init__(self, ConfigPath=None, EditPath=None, Cmd_hass='hass'):
-        self._version = '0.0.4'
+        self._version = '0.0.5'
 
         if os.name == 'nt':
             self._startupinfo = subprocess.STARTUPINFO()
@@ -129,6 +129,7 @@ from aiohttp import web
 import json
 import uuid
 import importlib
+import sys
 
 import voluptuous as vol
 from homeassistant.util.async import run_coroutine_threadsafe
@@ -150,7 +151,7 @@ CONFIG_SCHEMA = vol.Schema({
 def setup(hass, config=None):
     """Set up the component."""
 
-    rpa = redpoint_agent(ConfigPath=hass.config.config_dir)
+    rpa = redpoint_agent(ConfigPath=hass.config.config_dir, Cmd_hass=sys.argv[0])
     rpa.copyConfig()
 
     token = '/%s'%(str(uuid.uuid4()))
