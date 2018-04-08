@@ -13,7 +13,7 @@ import json
 class redpoint_agent(object):
 
     def __init__(self, ConfigPath=None, EditPath=None, Cmd_hass='hass'):
-        self._version = '0.0.5'
+        self._version = '0.0.6'
 
         if os.name == 'nt':
             self._startupinfo = subprocess.STARTUPINFO()
@@ -132,7 +132,10 @@ import importlib
 import sys
 
 import voluptuous as vol
-from homeassistant.util.async import run_coroutine_threadsafe
+try:
+    from homeassistant.util.async import run_coroutine_threadsafe
+except:
+    from homeassistant.util.async_ import run_coroutine_threadsafe
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.components.http import setup_cors
 
