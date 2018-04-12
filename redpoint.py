@@ -13,7 +13,7 @@ import json
 class redpoint_agent(object):
 
     def __init__(self, ConfigPath=None, EditPath=None, Cmd_hass='hass'):
-        self._version = '0.0.6'
+        self._version = '0.0.7'
 
         if os.name == 'nt':
             self._startupinfo = subprocess.STARTUPINFO()
@@ -32,7 +32,7 @@ class redpoint_agent(object):
         else:
             self._config['editing_config_path']=EditPath
 
-        self._Cmd_hass = Cmd_hass
+        self._Cmd_hass = Cmd_hass.split()
 
 
     def _detectConfigPath(self):
@@ -65,7 +65,7 @@ class redpoint_agent(object):
         shutil.copytree(self._config['config_path'], to, ignore=self._ignored_files)
 
     def Check(self):
-        cmd = [self._Cmd_hass, "--script", "check_config",
+        cmd = self._Cmd_hass + ["--script", "check_config",
                "-c", self._config['editing_config_path']]
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
@@ -138,23 +138,31 @@ except:
     from homeassistant.util.async_ import run_coroutine_threadsafe
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.components.http import setup_cors
+import homeassistant.helpers.config_validation as cv
 
 #from .redpoint_agent import redpoint_agent
 
 DOMAIN = 'redpoint'
 
 _LOGGER = logging.getLogger(__name__)
+CONF_STARTUP_CMD = 'hass_cmd'
 
 CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({}),
+    DOMAIN: vol.Schema({
+        vol.Optional(CONF_STARTUP_CMD): cv.string
+        }),
 }, extra=vol.ALLOW_EXTRA)
 
 
-#@asyncio.coroutine
 def setup(hass, config=None):
     """Set up the component."""
 
-    rpa = redpoint_agent(ConfigPath=hass.config.config_dir, Cmd_hass=sys.argv[0])
+    if config[DOMAIN].get(CONF_STARTUP_CMD):
+        startup_cmd = config[DOMAIN].get(CONF_STARTUP_CMD)
+    else:
+        startup_cmd = sys.argv[0]
+
+    rpa = redpoint_agent(ConfigPath=hass.config.config_dir, Cmd_hass=startup_cmd)
     rpa.copyConfig()
 
     token = '/%s'%(str(uuid.uuid4()))
