@@ -5,7 +5,7 @@
 redpoint:
 
 ```
- - 如果HomeAssistant并不是以hass命令启动的（例如在群晖的docker上），可以增加以下的配置参数：
+ - 如果HomeAssistant并不是以hass命令启动的（例如在群晖的docker上），可以增加以下的配置参数（指定启动命令）：
 ```yaml
 redpoint:
   hass_cmd: python -m homeassistant
