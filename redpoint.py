@@ -3,17 +3,17 @@
 For more details about HAChina,
 https://www.hachina.io/
 """
-#import asyncio
 import subprocess
 import shutil
 import os
 import time
 import json
 
+
 class redpoint_agent(object):
 
     def __init__(self, ConfigPath=None, EditPath=None, Cmd_hass='hass'):
-        self._version = '0.0.7'
+        self._version = '0.0.8'
 
         if os.name == 'nt':
             self._startupinfo = subprocess.STARTUPINFO()
@@ -23,46 +23,44 @@ class redpoint_agent(object):
 
         self._config = {}
         if ConfigPath is None:
-            self._config['config_path']=self._detectConfigPath()
+            self._config['config_path'] = self._detectConfigPath()
         else:
-            self._config['config_path']=ConfigPath
+            self._config['config_path'] = ConfigPath
 
         if EditPath is None:
-            self._config['editing_config_path']=self._editingConfigPath()
+            self._config['editing_config_path'] = self._editingConfigPath()
         else:
-            self._config['editing_config_path']=EditPath
+            self._config['editing_config_path'] = EditPath
 
         self._Cmd_hass = Cmd_hass.split()
-
 
     def _detectConfigPath(self):
         data_dir = os.getenv('APPDATA') if os.name == 'nt' \
             else os.path.expanduser('~')
         return os.path.join(data_dir, '.homeassistant')
 
-
     def _editingConfigPath(self):
         data_dir = os.getenv('APPDATA') if os.name == 'nt' \
             else os.path.expanduser('~')
         return os.path.join(data_dir, '.haconfig_tmp')
 
-
-    def _ignored_files(self,adir, filenames):
+    def _ignored_files(self, adir, filenames):
         return [filename for filename in filenames if
-                (adir.endswith('deps') and filename=='man')
-                or (('deps' in adir) and ('Python' in adir) and filename=='Scripts')
+                (adir.endswith('deps') and filename == 'man')
+                or (('deps' in adir) and ('Python' in adir) and filename == 'Scripts')
                 or (adir.endswith('site-packages') and ('colorlog' not in filename))
                 or (('custom_components' not in adir) and (filename == 'tts'))
                 or filename.endswith('.swp')
                 or filename.endswith('.db')
-                #or filename == '__pycache__'
+                # or filename == '__pycache__'
                 ]
 
     def copyConfig(self):
         to = self._config['editing_config_path']
         if os.path.exists(to):
             shutil.rmtree(to)
-        shutil.copytree(self._config['config_path'], to, ignore=self._ignored_files)
+        shutil.copytree(self._config['config_path'],
+                        to, ignore=self._ignored_files)
 
     def Check(self):
         cmd = self._Cmd_hass + ["--script", "check_config",
@@ -72,12 +70,7 @@ class redpoint_agent(object):
                              stdin=subprocess.PIPE,
                              startupinfo=self._startupinfo)
         out, err = p.communicate()
-        #p = yield from asyncio.create_subprocess_exec(*cmd,
-        #                                              stdout=asyncio.subprocess.PIPE,
-        #                                              stderr=asyncio.subprocess.PIPE,
-        #                                              stdin=asyncio.subprocess.PIPE,
-        #                                              )
-        #out, err = yield from p.communicate()
+
         if(err):
             raise Exception(err)
 
@@ -89,30 +82,34 @@ class redpoint_agent(object):
         return json.dumps({
             'isOK': p.returncode == 0,
             'msg': out
-            })
+        })
 
     def ReadConfiguration(self):
-        path = os.path.join(self._config['editing_config_path'], 'configuration.yaml')
+        path = os.path.join(
+            self._config['editing_config_path'], 'configuration.yaml')
         with open(path, 'r', encoding='utf8') as configuration:
             content = configuration.read()
 
         return content
 
     def WriteConfiguration(self, content):
-        path = os.path.join(self._config['editing_config_path'], 'configuration.yaml')
+        path = os.path.join(
+            self._config['editing_config_path'], 'configuration.yaml')
         with open(path, 'w', encoding='utf8') as configuration:
             configuration.write(content)
 
         return True
 
     def Publish(self):
-        file_from = os.path.join(self._config['editing_config_path'] , 'configuration.yaml')
-        file_to = os.path.join(self._config['config_path'] , 'configuration.yaml')
-        file_backup = file_to + '.' + time.strftime('%Y%m%d%H%M%S',time.localtime(time.time()))
+        file_from = os.path.join(
+            self._config['editing_config_path'], 'configuration.yaml')
+        file_to = os.path.join(
+            self._config['config_path'], 'configuration.yaml')
+        file_backup = file_to + '.' + \
+            time.strftime('%Y%m%d%H%M%S', time.localtime(time.time()))
         shutil.copyfile(file_to, file_backup)
         shutil.copyfile(file_from, file_to)
         return True
-
 
     @property
     def config(self):
@@ -122,7 +119,7 @@ class redpoint_agent(object):
     def version(self):
         return self._version
 
-
+    
 import logging
 import asyncio
 from aiohttp import web
