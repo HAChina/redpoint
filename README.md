@@ -14,3 +14,6 @@ redpoint:
   # 其中python在某些系统中可能为python3
   hass_cmd: python -m homeassistant
 ```
+
+ - 如果在HomeAssistant的`http`配置中，配置了跨域访问（`cors_allowed_origins`），请在其中增加`http://redpoint.hachina.io`<br>
+如果没有配置跨域访问，不必增加。
