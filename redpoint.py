@@ -198,7 +198,30 @@ class RedpointCheckView(HomeAssistantView):
     @asyncio.coroutine
     def get(self, request):
         """Return themes."""
-        out = yield from self.hass.async_add_job(self.rpa.Check)
+
+        #out = yield from self.hass.async_add_job(self.rpa.Check)
+        #return web.Response(text=out, content_type="application/json")
+
+        shutil.copyfile(self.rpa.config_file, self.rpa.tmp_config_file)
+        with open(self.rpa.config_file, 'w', encoding='utf8') as configuration:
+            configuration.write(self.rpa.ReadConfiguration())
+
+        from homeassistant.scripts.check_config import check_ha_config_file
+        res = yield from self.hass.async_add_job(
+            check_ha_config_file, self.hass)
+
+        shutil.copyfile(self.rpa.tmp_config_file, self.rpa.config_file)
+        
+        if not res.errors:
+            out = json.dumps({
+                'isOK': True,
+                'msg': 'OK'
+                })
+        else:
+            out = json.dumps({
+                'isOK': False,
+                'msg': '\n'.join([err.message for err in res.errors])
+                })
         return web.Response(text=out, content_type="application/json")
 
 
