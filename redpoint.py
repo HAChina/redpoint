@@ -3,7 +3,6 @@
 For more details about HAChina,
 https://www.hachina.io/
 """
-import subprocess
 import shutil
 import os
 import time
@@ -12,7 +11,6 @@ import logging
 import asyncio
 import uuid
 import importlib
-import sys
 from aiohttp import web
 import voluptuous as vol
 try:
@@ -20,32 +18,22 @@ try:
 except ImportError:
     from homeassistant.util.async_ import run_coroutine_threadsafe
 from homeassistant.components.http import HomeAssistantView
-from homeassistant.components.http import setup_cors
 import homeassistant.helpers.config_validation as cv
 
 
 DOMAIN = 'redpoint'
 
 _LOGGER = logging.getLogger(__name__)
-CONF_STARTUP_CMD = 'hass_cmd'
 
 CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Optional(CONF_STARTUP_CMD): cv.string
-        }),
+    DOMAIN: vol.Schema({}),
 }, extra=vol.ALLOW_EXTRA)
 
 
 class RedpointAgent(object):
     """RedpointAgent"""
-    def __init__(self, ConfigPath=None, cmd_hass='hass'):
-        self._version = '0.2.9'
-
-        if os.name == 'nt':
-            self._startupinfo = subprocess.STARTUPINFO()
-            self._startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        else:
-            self._startupinfo = None
+    def __init__(self, ConfigPath=None):
+        self._version = '0.3.1'
 
         self._config = {}
         if ConfigPath is None:
@@ -58,8 +46,6 @@ class RedpointAgent(object):
         self.tmp_config_file = os.path.join(
             self._config['config_path'], 'configuration.yaml.tmp')
 
-        self._cmd_hass = cmd_hass.split()
-
         with open(self.config_file, 'r', encoding='utf8') as configuration:
             self._conf_content = configuration.read()
 
@@ -67,36 +53,6 @@ class RedpointAgent(object):
         data_dir = os.getenv('APPDATA') if os.name == 'nt' \
             else os.path.expanduser('~')
         return os.path.join(data_dir, '.homeassistant')
-
-    def Check(self):
-        shutil.copyfile(self.config_file, self.tmp_config_file)
-        with open(self.config_file, 'w', encoding='utf8') as configuration:
-            configuration.write(self._conf_content)
-
-        cmd = self._cmd_hass + ["--script",
-                                "check_config",
-                                "-c",
-                                self._config['config_path']]
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE,
-                             stdin=subprocess.PIPE,
-                             startupinfo=self._startupinfo)
-        out, err = p.communicate()
-
-        shutil.copyfile(self.tmp_config_file, self.config_file)
-
-        if err:
-            raise Exception(err)
-
-        if os.name == "nt":
-            out = out.decode('gb2312')
-        else:
-            out = out.decode()
-
-        return json.dumps({
-            'isOK': p.returncode == 0,
-            'msg': out
-        })
 
     def ReadConfiguration(self):
         return self._conf_content
@@ -125,13 +81,7 @@ class RedpointAgent(object):
 def setup(hass, config=None):
     """Set up the component."""
 
-    if config[DOMAIN].get(CONF_STARTUP_CMD):
-        startup_cmd = config[DOMAIN].get(CONF_STARTUP_CMD)
-    else:
-        startup_cmd = sys.argv[0]
-
-    rpa = RedpointAgent(
-        ConfigPath=hass.config.config_dir, cmd_hass=startup_cmd)
+    rpa = RedpointAgent(ConfigPath=hass.config.config_dir)
 
     token = '/%s' % (str(uuid.uuid4()))
 
@@ -152,14 +102,12 @@ def setup(hass, config=None):
         setattr(view, 'name', name)
         setattr(view, 'url', t[0])
         setattr(view, 'requires_auth', t[1])
+        setattr(view, 'cors_allowed', True)
         setattr(view, 'rpa', rpa)
         setattr(view, 'token', token)
         setattr(view, 'hass', hass)
 
         hass.http.register_view(view)
-
-    if "cors_allowed_origins" not in config["http"]:
-        setup_cors(hass.http.app, ["http://redpoint.hachina.io"])
 
     run_coroutine_threadsafe(
         hass.components.frontend.async_register_built_in_panel(
@@ -198,9 +146,6 @@ class RedpointCheckView(HomeAssistantView):
     @asyncio.coroutine
     def get(self, request):
         """Return themes."""
-
-        #out = yield from self.hass.async_add_job(self.rpa.Check)
-        #return web.Response(text=out, content_type="application/json")
 
         shutil.copyfile(self.rpa.config_file, self.rpa.tmp_config_file)
         with open(self.rpa.config_file, 'w', encoding='utf8') as configuration:
