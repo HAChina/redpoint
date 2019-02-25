@@ -13,10 +13,7 @@ import uuid
 import importlib
 from aiohttp import web
 import voluptuous as vol
-try:
-    from homeassistant.util.async import run_coroutine_threadsafe
-except ImportError:
-    from homeassistant.util.async_ import run_coroutine_threadsafe
+from homeassistant.util.async_ import run_coroutine_threadsafe
 from homeassistant.components.http import HomeAssistantView
 import homeassistant.helpers.config_validation as cv
 
