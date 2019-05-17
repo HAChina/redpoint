@@ -1,5 +1,6 @@
 使用：
- - 将`redpoint.py`放置在`~/.homeassistant/custom_components/`目录下
+ - 建立目录`~/.homeassistant/custom_components/redpoint`
+ - 将`__init__.py`与`manifest.json`放置在`redpoint`目录下
  - 配置文件：
 ```yaml
 redpoint:
