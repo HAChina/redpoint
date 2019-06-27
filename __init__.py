@@ -106,13 +106,10 @@ def setup(hass, config=None):
 
         hass.http.register_view(view)
 
-    run_coroutine_threadsafe(
-        hass.components.frontend.async_register_built_in_panel(
+    hass.components.frontend.async_register_built_in_panel(
             'iframe', "红点", "mdi:hand-pointing-right",
             'redpoint_config', {'url': views["Redpoint:redirect"][0]}
-            ),
-        hass.loop
-        )
+            )
     return True
 
 
