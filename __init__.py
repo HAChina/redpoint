@@ -30,7 +30,7 @@ CONFIG_SCHEMA = vol.Schema({
 class RedpointAgent(object):
     """RedpointAgent"""
     def __init__(self, ConfigPath=None):
-        self._version = '0.3.1'
+        self._version = '0.4.1'
 
         self._config = {}
         if ConfigPath is None:
@@ -145,9 +145,9 @@ class RedpointCheckView(HomeAssistantView):
         with open(self.rpa.config_file, 'w', encoding='utf8') as configuration:
             configuration.write(self.rpa.ReadConfiguration())
 
-        from homeassistant.scripts.check_config import check_ha_config_file
+        from homeassistant.helpers.check_config import async_check_ha_config_file
         res = yield from self.hass.async_add_job(
-            check_ha_config_file, self.hass)
+            async_check_ha_config_file, self.hass)
 
         shutil.copyfile(self.rpa.tmp_config_file, self.rpa.config_file)
         
